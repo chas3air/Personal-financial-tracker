@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"usersmanager/internal/domain/models"
+	usersgrpc "usersmanager/internal/grpc/users"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -27,8 +28,7 @@ type IUsersService interface {
 
 func New(log *slog.Logger, usersService IUsersService, port int) *App {
 	gRPCServer := grpc.NewServer()
-
-	// usersgrpc.Register(gRPCServer, usersService)
+	usersgrpc.Register(gRPCServer, log, usersService)
 
 	return &App{
 		log:        log,

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	grpcapp "usersmanager/internal/app/grpc"
 	"usersmanager/internal/domain/models"
+	usersservice "usersmanager/internal/service/users"
 
 	"github.com/google/uuid"
 )
