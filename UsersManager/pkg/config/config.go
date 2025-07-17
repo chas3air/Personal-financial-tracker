@@ -10,14 +10,11 @@ import (
 )
 
 type Config struct {
-	Env                    string `yaml:"env" env-default:"local"`
-	Port                   int    `yaml:"port" env:"PORT" env-default:"8080"`
-	MongoDBHost            string `yaml:"mongodb_host" env:"MONGODB_HOST" env-default:"mongo_cont"`
-	MongoDBPort            int    `yaml:"mongodb_port" env:"MONGODB_PORT" env-default:"27017"`
-	MongoDBDBName          string `yaml:"mongodb_db_name" env:"MONGODB_DB_NAME" env-default:"users"`
-	MongoDBUsersCollection string `yaml:"mongodb_users_collection_name" env:"MONGODB_USERS_COLLECTION_NAME" env-default:"users"`
-	PsqlConnStr            string `yaml:"psql_conn_str" env:"PSQL_CONN_STR"`
-	PsqlUsersTableName     string `yaml:"psql_users_table_name" env:"PSQL_USERS_TABLE_NAME"`
+	Env  string `yaml:"env" env-default:"local"`
+	Port int    `yaml:"port" env:"PORT" env-default:"8080"`
+
+	PsqlConnStr        string `yaml:"psql_conn_str" env:"PSQL_CONN_STR"`
+	PsqlUsersTableName string `yaml:"psql_users_table_name" env:"PSQL_USERS_TABLE_NAME"`
 }
 
 func MustLoad() *Config {
