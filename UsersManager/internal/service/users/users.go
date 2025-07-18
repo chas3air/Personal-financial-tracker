@@ -106,7 +106,7 @@ func (u *UsersService) Insert(ctx context.Context, userForInsert models.User) (m
 		}
 
 		log.Error("Error inserting user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w")
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return insertedUser, nil

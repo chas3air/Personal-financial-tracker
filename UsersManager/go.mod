@@ -9,7 +9,14 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pressly/goose/v3 v3.24.3
+	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.74.0
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 )
 
 require (
