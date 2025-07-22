@@ -25,18 +25,18 @@ type IUsersService interface {
 }
 
 type ServerAPI struct {
-	log     *slog.Logger
-	service IUsersService
+	Log     *slog.Logger
+	Service IUsersService
 	umv1.UnimplementedUsersManagerServer
 }
 
 func Register(grpc *grpc.Server, log *slog.Logger, service IUsersService) {
-	umv1.RegisterUsersManagerServer(grpc, &ServerAPI{log: log, service: service})
+	umv1.RegisterUsersManagerServer(grpc, &ServerAPI{Log: log, Service: service})
 }
 
 func (s *ServerAPI) GetUsers(ctx context.Context, req *umv1.GetUsersRequest) (*umv1.GetUsersResponse, error) {
 	const op = "grpc.users.GetUsers"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -47,7 +47,7 @@ func (s *ServerAPI) GetUsers(ctx context.Context, req *umv1.GetUsersRequest) (*u
 	default:
 	}
 
-	users, err := s.service.GetUsers(ctx)
+	users, err := s.Service.GetUsers(ctx)
 	if err != nil {
 		log.Error("Error fetching users", sl.Err(err))
 		return nil, status.Error(codes.Internal, "Error fetching users")
@@ -65,7 +65,7 @@ func (s *ServerAPI) GetUsers(ctx context.Context, req *umv1.GetUsersRequest) (*u
 
 func (s *ServerAPI) GetUserById(ctx context.Context, req *umv1.GetUserByIdRequest) (*umv1.GetUserByIdResponse, error) {
 	const op = "grpc.users.GetUsers"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -76,8 +76,13 @@ func (s *ServerAPI) GetUserById(ctx context.Context, req *umv1.GetUserByIdReques
 	default:
 	}
 
-	uid := uuid.MustParse(req.GetId())
-	user, err := s.service.GetUserById(ctx, uid)
+	uid, err := uuid.Parse(req.GetId())
+	if err != nil {
+		log.Error("invalid id", sl.Err(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+
+	user, err := s.Service.GetUserById(ctx, uid)
 	if err != nil {
 		if errors.Is(err, serviceerros.ErrNotFound) {
 			log.Warn("User not found", sl.Err(serviceerros.ErrNotFound))
@@ -95,7 +100,7 @@ func (s *ServerAPI) GetUserById(ctx context.Context, req *umv1.GetUserByIdReques
 
 func (s *ServerAPI) Insert(ctx context.Context, req *umv1.InsertRequest) (*umv1.InsertResponse, error) {
 	const op = "grpc.users.Insert"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -112,7 +117,7 @@ func (s *ServerAPI) Insert(ctx context.Context, req *umv1.InsertRequest) (*umv1.
 		return nil, status.Error(codes.InvalidArgument, "invalid argument")
 	}
 
-	insertedUser, err := s.service.Insert(ctx, userForInsert)
+	insertedUser, err := s.Service.Insert(ctx, userForInsert)
 	if err != nil {
 		if errors.Is(err, serviceerros.ErrAlreadyExists) {
 			log.Warn("User already exists", sl.Err(serviceerros.ErrAlreadyExists))
@@ -130,7 +135,7 @@ func (s *ServerAPI) Insert(ctx context.Context, req *umv1.InsertRequest) (*umv1.
 
 func (s *ServerAPI) Update(ctx context.Context, req *umv1.UpdateRequest) (*umv1.UpdateResponse, error) {
 	const op = "grpc.users.Update"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -153,7 +158,7 @@ func (s *ServerAPI) Update(ctx context.Context, req *umv1.UpdateRequest) (*umv1.
 		return nil, status.Error(codes.InvalidArgument, "invalid user for update")
 	}
 
-	updatedUser, err := s.service.Update(ctx, idForUpdate, userForUpdate)
+	updatedUser, err := s.Service.Update(ctx, idForUpdate, userForUpdate)
 	if err != nil {
 		if errors.Is(err, serviceerros.ErrNotFound) {
 			log.Warn("User not found", sl.Err(serviceerros.ErrNotFound))
@@ -171,7 +176,7 @@ func (s *ServerAPI) Update(ctx context.Context, req *umv1.UpdateRequest) (*umv1.
 
 func (s *ServerAPI) Delete(ctx context.Context, req *umv1.DeleteRequest) (*umv1.DeleteResponse, error) {
 	const op = "grpc.users.Delete"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -188,7 +193,7 @@ func (s *ServerAPI) Delete(ctx context.Context, req *umv1.DeleteRequest) (*umv1.
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
 
-	deletedUser, err := s.service.Delete(ctx, idForDelete)
+	deletedUser, err := s.Service.Delete(ctx, idForDelete)
 	if err != nil {
 		if errors.Is(err, serviceerros.ErrNotFound) {
 			log.Warn("User not found", sl.Err(serviceerros.ErrNotFound))
