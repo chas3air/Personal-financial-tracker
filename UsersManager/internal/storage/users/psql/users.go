@@ -50,14 +50,12 @@ func (u *UsersPsqlStorage) Close() {
 
 // GetUsers implements app.IUsersStorage.
 func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) {
-	const op = "storage.user.psql.GetUsers"
-	log := u.Log.With(
-		"op", op,
-	)
+	const op = "storage.users.psql.GetUsers"
+	log := u.Log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return nil, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -71,7 +69,7 @@ func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 	defer rows.Close()
 
 	var bufUser models.User
-	var users = make([]models.User, 0, 10)
+	users := make([]models.User, 0, 10)
 	for rows.Next() {
 		if err := rows.Scan(&bufUser.Id, &bufUser.Login, &bufUser.Password, &bufUser.Role); err != nil {
 			log.Warn("Error scanning row", sl.Err(err))
@@ -81,50 +79,47 @@ func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 		users = append(users, bufUser)
 	}
 
+	log.Info("Users fetched successfully", slog.Int("count", len(users)))
 	return users, nil
 }
 
 // GetUserById implements app.IUsersStorage.
 func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
-	const op = "storage.user.psql.GetUserById"
-	log := u.Log.With(
-		"op", op,
-	)
+	const op = "storage.users.psql.GetUserById"
+	log := u.Log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
 	var user models.User
-
 	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1;", u.TableName)
 	err := u.DB.QueryRowContext(ctx, query, uid).Scan(&user.Id, &user.Login, &user.Password, &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("User doesn't exists", sl.Err(storageerrors.ErrNotFound))
+			log.Warn("User doesn't exist", sl.Err(storageerrors.ErrNotFound), slog.String("user_id", uid.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrNotFound)
 		}
 
-		log.Error("Error scanning row", sl.Err(err))
+		log.Error("Error scanning row", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User fetched successfully", slog.String("user_id", user.Id.String()))
 	return user, nil
 }
 
 // Insert implements app.IUsersStorage.
 func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
-	const op = "storage.user.psql.Insert"
-	log := u.Log.With(
-		"op", op,
-	)
+	const op = "storage.users.psql.Insert"
+	log := u.Log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -133,27 +128,26 @@ func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models
 	_, err := u.DB.ExecContext(ctx, query, user.Id, user.Login, user.Password, user.Role)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			log.Warn("User already exists", sl.Err(storageerrors.ErrAlreadyExists))
+			log.Warn("User already exists", sl.Err(storageerrors.ErrAlreadyExists), slog.String("user_id", user.Id.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrAlreadyExists)
 		}
 
-		log.Error("Error inserting user", sl.Err(err))
+		log.Error("Error inserting user", sl.Err(err), slog.String("user_id", user.Id.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User inserted successfully", slog.String("user_id", user.Id.String()))
 	return user, nil
 }
 
 // Update implements app.IUsersStorage.
 func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
-	const op = "storage.user.psql.Update"
-	log := u.Log.With(
-		"op", op,
-	)
+	const op = "storage.users.psql.Update"
+	log := u.Log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -161,29 +155,28 @@ func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user model
 	query := fmt.Sprintf("UPDATE %s SET login = $1, password = $2, role = $3 WHERE id = $4;", u.TableName)
 	result, err := u.DB.ExecContext(ctx, query, user.Login, user.Password, user.Role, uid)
 	if err != nil {
-		log.Error("Error updating user", sl.Err(err))
+		log.Error("Error updating user", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		log.Error("Zero users affected")
+		log.Error("Zero users affected", slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrNotFound)
 	}
 
+	log.Info("User updated successfully", slog.String("user_id", uid.String()))
 	return user, nil
 }
 
 // Delete implements app.IUsersStorage.
 func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
-	const op = "storage.user.psql.Delete"
-	log := u.Log.With(
-		"op", op,
-	)
+	const op = "storage.users.psql.Delete"
+	log := u.Log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -191,19 +184,20 @@ func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.Us
 	userForReturn, err := u.GetUserById(ctx, uid)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrNotFound) {
-			log.Error("User doesn't exists", sl.Err(storageerrors.ErrNotFound))
+			log.Error("User doesn't exist", sl.Err(storageerrors.ErrNotFound), slog.String("user_id", uid.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrNotFound)
 		}
 
-		log.Error("Error retrieving user before deleting", sl.Err(err))
+		log.Error("Error retrieving user before deleting", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
 	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1;", u.TableName)
 	if _, err := u.DB.ExecContext(ctx, query, uid); err != nil {
-		log.Error("Error deleting user", sl.Err(err))
+		log.Error("Error deleting user", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User deleted successfully", slog.String("user_id", uid.String()))
 	return userForReturn, nil
 }

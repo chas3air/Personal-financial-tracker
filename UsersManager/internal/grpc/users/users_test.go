@@ -91,7 +91,7 @@ func TestServerAPI_GetUsers(t *testing.T) {
 		_, err := server.GetUsers(ctxCanceled, &umv1.GetUsersRequest{})
 		st, ok := status.FromError(err)
 		assert.True(t, ok)
-		assert.Equal(t, codes.DeadlineExceeded, st.Code())
+		assert.Equal(t, codes.Canceled, st.Code())
 	})
 }
 
