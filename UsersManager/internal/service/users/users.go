@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"usersmanager/internal/domain/models"
-	serviceerros "usersmanager/internal/service"
+	serviceerrors "usersmanager/internal/service"
 	storageerrors "usersmanager/internal/storage"
 	"usersmanager/pkg/lib/logger/sl"
 
@@ -36,36 +36,33 @@ func New(log *slog.Logger, storage IUsersStorage) *UsersService {
 // GetUsers implements grpcapp.IUsersService.
 func (u *UsersService) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "service.users.GetUsers"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return nil, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
 	users, err := u.storage.GetUsers(ctx)
 	if err != nil {
-		log.Error("Error fetching users", sl.Err(err))
+		log.Error("Failed to fetch users", sl.Err(err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("Users fetched successfully", slog.Int("count", len(users)))
 	return users, nil
 }
 
 // GetUserById implements grpcapp.IUsersService.
 func (u *UsersService) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "service.users.GetUserById"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -73,27 +70,26 @@ func (u *UsersService) GetUserById(ctx context.Context, uid uuid.UUID) (models.U
 	user, err := u.storage.GetUserById(ctx, uid)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrNotFound) {
-			log.Warn("User not found", sl.Err(storageerrors.ErrNotFound))
-			return models.User{}, fmt.Errorf("%s: %w", op, serviceerros.ErrNotFound)
+			log.Warn("User not found", sl.Err(storageerrors.ErrNotFound), slog.String("user_id", uid.String()))
+			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		}
 
-		log.Error("Error fetching user by id", sl.Err(err))
+		log.Error("Failed to fetch user by id", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User fetched successfully", slog.String("user_id", user.Id.String()))
 	return user, nil
 }
 
 // Insert implements grpcapp.IUsersService.
 func (u *UsersService) Insert(ctx context.Context, userForInsert models.User) (models.User, error) {
 	const op = "service.users.Insert"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -101,27 +97,26 @@ func (u *UsersService) Insert(ctx context.Context, userForInsert models.User) (m
 	insertedUser, err := u.storage.Insert(ctx, userForInsert)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrAlreadyExists) {
-			log.Warn("User already exists", sl.Err(storageerrors.ErrAlreadyExists))
-			return models.User{}, fmt.Errorf("%s: %w", op, serviceerros.ErrAlreadyExists)
+			log.Warn("User already exists", sl.Err(storageerrors.ErrAlreadyExists), slog.String("user_id", userForInsert.Id.String()))
+			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrAlreadyExists)
 		}
 
-		log.Error("Error inserting user", sl.Err(err))
+		log.Error("Failed to insert user", sl.Err(err), slog.String("user_id", userForInsert.Id.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User inserted successfully", slog.String("user_id", insertedUser.Id.String()))
 	return insertedUser, nil
 }
 
 // Update implements grpcapp.IUsersService.
 func (u *UsersService) Update(ctx context.Context, uid uuid.UUID, userForUpdate models.User) (models.User, error) {
 	const op = "service.users.Update"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -129,28 +124,26 @@ func (u *UsersService) Update(ctx context.Context, uid uuid.UUID, userForUpdate 
 	updatedUser, err := u.storage.Update(ctx, uid, userForUpdate)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrNotFound) {
-			log.Warn("User not found", sl.Err(storageerrors.ErrNotFound))
-			return models.User{}, fmt.Errorf("%s: %w", op, serviceerros.ErrNotFound)
+			log.Warn("User not found for update", sl.Err(storageerrors.ErrNotFound), slog.String("user_id", uid.String()))
+			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		}
 
-		log.Error("Error updating user", sl.Err(err))
+		log.Error("Failed to update user", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User updated successfully", slog.String("user_id", updatedUser.Id.String()))
 	return updatedUser, nil
-
 }
 
 // Delete implements grpcapp.IUsersService.
 func (u *UsersService) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "service.users.Delete"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
@@ -158,13 +151,14 @@ func (u *UsersService) Delete(ctx context.Context, uid uuid.UUID) (models.User, 
 	deletedUser, err := u.storage.Delete(ctx, uid)
 	if err != nil {
 		if errors.Is(err, storageerrors.ErrNotFound) {
-			log.Warn("User not found", sl.Err(storageerrors.ErrNotFound))
-			return models.User{}, fmt.Errorf("%s: %w", op, serviceerros.ErrNotFound)
+			log.Warn("User not found for deletion", sl.Err(storageerrors.ErrNotFound), slog.String("user_id", uid.String()))
+			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		}
 
-		log.Error("Error deleting user", sl.Err(err))
+		log.Error("Failed to delete user", sl.Err(err), slog.String("user_id", uid.String()))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User deleted successfully", slog.String("user_id", deletedUser.Id.String()))
 	return deletedUser, nil
 }
