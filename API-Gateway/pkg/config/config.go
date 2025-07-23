@@ -13,8 +13,8 @@ type Config struct {
 	Env  string `yaml:"env" env-default:"local"`
 	Port int    `yaml:"port" env:"PORT" env-default:"8080"`
 
-	PsqlConnStr        string `yaml:"psql_conn_str" env:"PSQL_CONN_STR"`
-	PsqlUsersTableName string `yaml:"psql_users_table_name" env:"PSQL_USERS_TABLE_NAME"`
+	UsersStorageHost string `env:"USERS_STORAGE_HOST" env-default:"user_service"`
+	UsersStoragePort int    `env:"USERS_STORAGE_PORT" env-default:"50051"`
 }
 
 func MustLoad() *Config {
