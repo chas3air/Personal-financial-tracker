@@ -1,16 +1,16 @@
 package usersgrpcstorage
 
 import (
-	"apigateway/internal/domain/models"
-	"apigateway/internal/domain/profiles"
-	grpchelper "apigateway/pkg/lib/grpc/helper"
-	"apigateway/pkg/lib/logger/sl"
 	"context"
 	"fmt"
 	"log/slog"
 
-	umv1 "github.com/chas3air/protos/gen/go/usersManager"
+	"apigateway/internal/domain/models"
+	"apigateway/internal/domain/profiles"
+	grpchelper "apigateway/pkg/lib/grpc/helper"
+	"apigateway/pkg/lib/logger/sl"
 
+	umv1 "github.com/chas3air/protos/gen/go/usersManager"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,7 +27,7 @@ func New(log *slog.Logger, host string, port int) *GRPCUsersStorage {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Error("failed to connect to gRPC server", sl.Err(err))
+		log.Error("Failed to connect to gRPC server", sl.Err(err))
 		panic(err)
 	}
 
@@ -49,19 +49,19 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return nil, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
-	c := umv1.NewUsersManagerClient(s.Conn)
-	res, err := c.GetUsers(ctx, nil)
+	client := umv1.NewUsersManagerClient(s.Conn)
+	res, err := client.GetUsers(ctx, &umv1.GetUsersRequest{})
 	if err != nil {
-		err := grpchelper.GrpcErrorHelper(s.Log, op, err)
+		err = grpchelper.GrpcErrorHelper(log, op, err)
 		return nil, err
 	}
 
-	var usersForRet = make([]models.User, 0, len(res.GetUsers()))
+	usersForRet := make([]models.User, 0, len(res.GetUsers()))
 
 	for _, pbUser := range res.GetUsers() {
 		tmpUser, err := profiles.ProtoUsrToUsr(pbUser)
@@ -73,6 +73,7 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 		usersForRet = append(usersForRet, tmpUser)
 	}
 
+	log.Info("Users fetched successfully", slog.Int("count", len(usersForRet)))
 	return usersForRet, nil
 }
 
@@ -82,15 +83,15 @@ func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
-	c := umv1.NewUsersManagerClient(s.Conn)
-	res, err := c.GetUserById(ctx, &umv1.GetUserByIdRequest{Id: uid.String()})
+	client := umv1.NewUsersManagerClient(s.Conn)
+	res, err := client.GetUserById(ctx, &umv1.GetUserByIdRequest{Id: uid.String()})
 	if err != nil {
-		err := grpchelper.GrpcErrorHelper(s.Log, op, err)
+		err = grpchelper.GrpcErrorHelper(log, op, err)
 		return models.User{}, err
 	}
 
@@ -100,6 +101,7 @@ func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User fetched successfully", slog.String("user_id", user.Id.String()))
 	return user, nil
 }
 
@@ -109,17 +111,17 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
 	pbUserForInsert := profiles.UsrToProtoUsr(userForInsert)
 
-	c := umv1.NewUsersManagerClient(s.Conn)
-	res, err := c.Insert(ctx, &umv1.InsertRequest{User: pbUserForInsert})
+	client := umv1.NewUsersManagerClient(s.Conn)
+	res, err := client.Insert(ctx, &umv1.InsertRequest{User: pbUserForInsert})
 	if err != nil {
-		err := grpchelper.GrpcErrorHelper(s.Log, op, err)
+		err = grpchelper.GrpcErrorHelper(log, op, err)
 		return models.User{}, err
 	}
 
@@ -129,6 +131,7 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User inserted successfully", slog.String("user_id", insertedUser.Id.String()))
 	return insertedUser, nil
 }
 
@@ -138,20 +141,20 @@ func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, userForUpd
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
 	pbUserForUpdate := profiles.UsrToProtoUsr(userForUpdate)
-	c := umv1.NewUsersManagerClient(s.Conn)
-	res, err := c.Update(ctx,
-		&umv1.UpdateRequest{
-			Id:   uid.String(),
-			User: pbUserForUpdate,
-		})
+
+	client := umv1.NewUsersManagerClient(s.Conn)
+	res, err := client.Update(ctx, &umv1.UpdateRequest{
+		Id:   uid.String(),
+		User: pbUserForUpdate,
+	})
 	if err != nil {
-		err := grpchelper.GrpcErrorHelper(s.Log, op, err)
+		err = grpchelper.GrpcErrorHelper(log, op, err)
 		return models.User{}, err
 	}
 
@@ -161,6 +164,7 @@ func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, userForUpd
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User updated successfully", slog.String("user_id", updatedUser.Id.String()))
 	return updatedUser, nil
 }
 
@@ -170,15 +174,15 @@ func (s *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.Us
 
 	select {
 	case <-ctx.Done():
-		log.Info("context is over")
+		log.Info("Context cancelled", sl.Err(ctx.Err()))
 		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
 	default:
 	}
 
-	c := umv1.NewUsersManagerClient(s.Conn)
-	res, err := c.Delete(ctx, &umv1.DeleteRequest{Id: uid.String()})
+	client := umv1.NewUsersManagerClient(s.Conn)
+	res, err := client.Delete(ctx, &umv1.DeleteRequest{Id: uid.String()})
 	if err != nil {
-		err := grpchelper.GrpcErrorHelper(s.Log, op, err)
+		err = grpchelper.GrpcErrorHelper(log, op, err)
 		return models.User{}, err
 	}
 
@@ -188,5 +192,6 @@ func (s *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.Us
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	log.Info("User deleted successfully", slog.String("user_id", deletedUser.Id.String()))
 	return deletedUser, nil
 }
