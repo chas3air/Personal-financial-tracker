@@ -21,6 +21,9 @@ type GRPCUsersStorage struct {
 	Conn *grpc.ClientConn
 }
 
+// New creates a new GRPCUsersStorage instance.
+// It establishes a gRPC connection to the given host and port using insecure credentials.
+// Panics if the connection cannot be established.
 func New(log *slog.Logger, host string, port int) *GRPCUsersStorage {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("%s:%d", host, port),
@@ -37,12 +40,20 @@ func New(log *slog.Logger, host string, port int) *GRPCUsersStorage {
 	}
 }
 
+// Close closes the underlying gRPC connection.
+// Panics if closing the connection fails.
 func (g *GRPCUsersStorage) Close() {
 	if err := g.Conn.Close(); err != nil {
 		panic(err)
 	}
 }
 
+// GetUsers fetches a list of users via gRPC from the remote UsersManager service.
+// Returns:
+// - []models.User and nil error on success.
+// - error if the context is cancelled or deadline exceeded.
+// - error wrapping storageerrors.ErrContextCanceled, ErrDeadlineExeeced, or ErrInternal for different gRPC error codes.
+// - Skips and logs users that have invalid format and continues processing the rest.
 func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "storage.users.grpc.GetUsers"
 	log := s.Log.With("op", op)
@@ -77,6 +88,11 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 	return usersForRet, nil
 }
 
+// GetUserById fetches a single user by its UUID via gRPC from the remote UsersManager service.
+// Returns:
+// - models.User and nil error on success.
+// - error wrapping storageerrors.ErrContextCanceled, ErrDeadlineExeeced, ErrInvalidArgument, ErrNotFound, or ErrInternal depending on the gRPC status code returned.
+// - error if the retrieved user data has an invalid format.
 func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.users.grpc.GetUserById"
 	log := s.Log.With("op", op)
@@ -105,6 +121,11 @@ func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 	return user, nil
 }
 
+// Insert sends a new user to be inserted via gRPC to the remote UsersManager service.
+// Returns:
+// - the inserted models.User and nil on success.
+// - error wrapping storageerrors.ErrContextCanceled, ErrDeadlineExeeced, ErrInvalidArgument, ErrAlreadyExists, or ErrInternal depending on the gRPC status code returned.
+// - error if the inserted user returned from the service has an invalid format.
 func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User) (models.User, error) {
 	const op = "storage.users.grpc.Insert"
 	log := s.Log.With("op", op)
@@ -135,6 +156,11 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 	return insertedUser, nil
 }
 
+// Update sends updated user data via gRPC to update the user with the given UUID on the remote UsersManager service.
+// Returns:
+// - the updated models.User and nil on success.
+// - error wrapping storageerrors.ErrContextCanceled, ErrDeadlineExeeced, ErrInvalidArgument, ErrNotFound, or ErrInternal depending on the gRPC status code returned.
+// - error if the updated user data returned from the service has an invalid format.
 func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, userForUpdate models.User) (models.User, error) {
 	const op = "storage.users.grpc.Update"
 	log := s.Log.With("op", op)
@@ -168,6 +194,11 @@ func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, userForUpd
 	return updatedUser, nil
 }
 
+// Delete deletes the user with the specified UUID via gRPC on the remote UsersManager service.
+// Returns:
+// - the deleted models.User and nil on success.
+// - error wrapping storageerrors.ErrContextCanceled, ErrDeadlineExeeced, ErrInvalidArgument, ErrNotFound, or ErrInternal depending on the gRPC status code returned.
+// - error if the deleted user data returned from the service has an invalid format.
 func (s *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.users.grpc.Delete"
 	log := s.Log.With("op", op)

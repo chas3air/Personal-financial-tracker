@@ -34,7 +34,7 @@ func GrpcErrorHelper(log *slog.Logger, op string, err error) error {
 			return fmt.Errorf("%s: %w", op, storageerrors.ErrNotFound)
 
 		default:
-			log.Error("Failed to fetch record by ID", sl.Err(err))
+			log.Error("Failed to carry out work with record ", sl.Err(err))
 			return fmt.Errorf("%s: %w", op, storageerrors.ErrInternal)
 		}
 	} else {
