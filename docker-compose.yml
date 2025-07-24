@@ -21,7 +21,7 @@ services:
   users_manager:
     build:
       context: ./UsersManager
-    container_name: UsersManager
+    container_name: user_service
     ports:
       - "6000:50051"
     networks:
@@ -29,6 +29,15 @@ services:
     depends_on:
       psql:
         condition: service_healthy
+
+  apigateway:
+    build:
+      context: "./API-Gateway"
+    container_name: api_gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - pft_net
 
 networks:
   pft_net:

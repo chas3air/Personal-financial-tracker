@@ -2,6 +2,7 @@ package main
 
 import (
 	"apigateway/internal/app"
+	usersgrpcstorage "apigateway/internal/storage/users/grpc"
 	"apigateway/pkg/config"
 	"apigateway/pkg/lib/logger"
 	"log/slog"
@@ -11,13 +12,15 @@ import (
 )
 
 func main() {
-	cfg := config.MustLoadEnv()
+	cfg := config.MustLoad()
 
 	log := logger.SetupLogger(cfg.Env)
 
 	log.Info("application config", slog.Any("config", cfg))
 
-	application := app.New(log, cfg.Port, nil)
+	storage := usersgrpcstorage.New(log, cfg.UsersStorageHost, cfg.UsersStoragePort)
+
+	application := app.New(log, cfg.Port, storage)
 
 	go func() {
 		application.MustRun()
@@ -25,9 +28,8 @@ func main() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
-	<- stop
+	<-stop
 
-	// storage.Close()
+	storage.Close()
 
-	// application.
 }

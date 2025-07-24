@@ -25,7 +25,7 @@ USER appuser
 
 WORKDIR /
 
-EXPOSE 50051
+EXPOSE 8080
 
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD ["./cli", "--config=./app/.env"]
+CMD ["./cli", "--config=/app/.env"]

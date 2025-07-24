@@ -2,6 +2,8 @@ package app
 
 import (
 	"apigateway/internal/domain/models"
+	usershandlers "apigateway/internal/handlers/users"
+	usersservice "apigateway/internal/service/users"
 	"context"
 	"fmt"
 	"log/slog"
@@ -42,10 +44,19 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	r := mux.NewRouter()
 
+	usersService := usersservice.New(a.log, a.storage)
+	usersHandler := usershandlers.New(a.log, usersService)
+
 	r.HandleFunc("/api/v1/login", nil).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/register", nil).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/refresh", nil).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/logout", nil).Methods(http.MethodPost)
+
+	r.HandleFunc("/api/v1/users", usersHandler.GetUsersHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.GetUserByIdHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/users", usersHandler.InsertHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.UpdateHandler).Methods(http.MethodPut)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.DeleteHandler).Methods(http.MethodDelete)
 
 	if err := http.ListenAndServe(
 		fmt.Sprintf(":%d", a.port),
