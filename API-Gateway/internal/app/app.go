@@ -3,9 +3,12 @@ package app
 import (
 	"apigateway/internal/domain/models"
 	"context"
+	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 type IUserStorage interface {
@@ -37,5 +40,19 @@ func (a *App) MustRun() {
 }
 
 func (a *App) Run() error {
+	r := mux.NewRouter()
+
+	r.HandleFunc("/api/v1/login", nil).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/register", nil).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/refresh", nil).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/logout", nil).Methods(http.MethodPost)
+
+	if err := http.ListenAndServe(
+		fmt.Sprintf(":%d", a.port),
+		r,
+	); err != nil {
+		panic(err)
+	}
+
 	return nil
 }
