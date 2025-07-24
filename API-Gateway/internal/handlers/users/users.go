@@ -34,6 +34,7 @@ func New(log *slog.Logger, service IUsersService) *UsersHandler {
 		service: service,
 	}
 }
+
 func (u *UsersHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.users.GetUsersHandler"
 	log := u.log.With("op", op)
@@ -59,6 +60,8 @@ func (u *UsersHandler) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	log.Info("Users fetched successfully", slog.Int("count", len(users)))
 
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(users); err != nil {
@@ -108,6 +111,8 @@ func (u *UsersHandler) GetUserByIdHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
+
+	log.Info("User fetched successfully", slog.String("user_id", user.Id.String()))
 
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
@@ -164,6 +169,8 @@ func (u *UsersHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	log.Info("User inserted successfully", slog.String("user_id", insertedUser.Id.String()))
 
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(insertedUser); err != nil {
@@ -228,6 +235,8 @@ func (u *UsersHandler) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Info("User updated successfully", slog.String("user_id", updatedUser.Id.String()))
+
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(updatedUser); err != nil {
 		log.Error("Failed to encode user", sl.Err(err))
@@ -276,6 +285,8 @@ func (u *UsersHandler) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	log.Info("User deleted successfully", slog.String("user_id", deletedUser.Id.String()))
 
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(deletedUser); err != nil {

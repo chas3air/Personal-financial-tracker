@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	Env  string `yaml:"env" env-default:"local"`
+	Env  string `yaml:"env" env:"ENV" env-default:"local"`
 	Port int    `yaml:"port" env:"PORT" env-default:"8080"`
 
 	UsersStorageHost string `env:"USERS_STORAGE_HOST" env-default:"user_service"`

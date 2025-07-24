@@ -1,0 +1,4 @@
+{"time":"2025-07-24T21:44:32.765885666Z","level":"INFO","msg":"application config","config":{"Env":"dev","Port":8080,"UsersStorageHost":"user_service","UsersStoragePort":50051}}
+{"time":"2025-07-24T21:44:41.903263648Z","level":"INFO","msg":"User fetched successfully","op":"storage.users.grpc.GetUserById","user_id":"ca0af6ef-eb7d-4754-ae9e-be0752ac1a8c"}
+{"time":"2025-07-24T21:44:41.90333168Z","level":"INFO","msg":"User fetched successfully","op":"service.users.GetUserById","user_id":"ca0af6ef-eb7d-4754-ae9e-be0752ac1a8c"}
+{"time":"2025-07-24T21:44:41.903360445Z","level":"INFO","msg":"User fetched successfully","op":"handlers.users.GetUserByIdHandler","user_id":"ca0af6ef-eb7d-4754-ae9e-be0752ac1a8c"}

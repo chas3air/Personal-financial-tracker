@@ -11,16 +11,21 @@ import (
 func SetupLogger(env string) *slog.Logger {
 	var log *slog.Logger
 
+	file, err := os.OpenFile("/app/log/state.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	if err != nil {
+		panic("failed to open log file: " + err.Error())
+	}
+
 	switch env {
 	case constants.EnvLocal:
 		log = setupPrettySlog()
 	case constants.EnvDev:
 		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+			slog.NewJSONHandler(file, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
 	case constants.EnvProd:
 		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
+			slog.NewJSONHandler(file, &slog.HandlerOptions{Level: slog.LevelInfo}),
 		)
 	}
 

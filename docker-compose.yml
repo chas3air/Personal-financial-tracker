@@ -38,6 +38,8 @@ services:
       - "8080:8080"
     networks:
       - pft_net
+    volumes:
+      - ./API-Gateway/log:/app/log
 
 networks:
   pft_net:

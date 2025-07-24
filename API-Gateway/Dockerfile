@@ -20,9 +20,6 @@ COPY --from=build /src /app
 
 RUN mv /app/cli /cli
 
-RUN adduser -D appuser
-USER appuser
-
 WORKDIR /
 
 EXPOSE 8080
