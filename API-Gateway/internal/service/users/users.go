@@ -48,10 +48,10 @@ func (u *UsersService) GetUsers(ctx context.Context) ([]models.User, error) {
 	if err != nil {
 		switch {
 		case errors.Is(err, storageerrors.ErrContextCanceled):
-			log.Warn("Context cancelled in storage layer", sl.Err(err))
+			log.Warn("Context cancelled", sl.Err(err))
 			return nil, fmt.Errorf("%s: %w", op, serviceerrors.ErrContextCanceled)
 		case errors.Is(err, storageerrors.ErrDeadlineExeeced):
-			log.Warn("Deadline exceeded in storage layer", sl.Err(err))
+			log.Warn("Deadline exceeded", sl.Err(err))
 			return nil, fmt.Errorf("%s: %w", op, serviceerrors.ErrDeadlineExeeced)
 		default:
 			log.Error("Failed to fetch users", sl.Err(err))
@@ -78,16 +78,16 @@ func (u *UsersService) GetUserById(ctx context.Context, uid uuid.UUID) (models.U
 	if err != nil {
 		switch {
 		case errors.Is(err, storageerrors.ErrContextCanceled):
-			log.Warn("Context cancelled in storage layer", sl.Err(err))
+			log.Warn("Context cancelled", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrContextCanceled)
 		case errors.Is(err, storageerrors.ErrDeadlineExeeced):
-			log.Warn("Deadline exceeded in storage layer", sl.Err(err))
+			log.Warn("Deadline exceeded", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrDeadlineExeeced)
 		case errors.Is(err, storageerrors.ErrInvalidArgument):
-			log.Warn("Invalid argument in storage layer", sl.Err(err))
+			log.Warn("Invalid argument", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrInvalidArgument)
 		case errors.Is(err, storageerrors.ErrNotFound):
-			log.Warn("User not found in storage layer", sl.Err(err), slog.String("user_id", uid.String()))
+			log.Warn("User not found", sl.Err(err), slog.String("user_id", uid.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		default:
 			log.Error("Failed to fetch user by id", sl.Err(err), slog.String("user_id", uid.String()))
@@ -114,16 +114,16 @@ func (u *UsersService) Insert(ctx context.Context, userForInsert models.User) (m
 	if err != nil {
 		switch {
 		case errors.Is(err, storageerrors.ErrContextCanceled):
-			log.Warn("Context cancelled in storage layer", sl.Err(err))
+			log.Warn("Context cancelled", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrContextCanceled)
 		case errors.Is(err, storageerrors.ErrDeadlineExeeced):
-			log.Warn("Deadline exceeded in storage layer", sl.Err(err))
+			log.Warn("Deadline exceeded", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrDeadlineExeeced)
 		case errors.Is(err, storageerrors.ErrInvalidArgument):
-			log.Warn("Invalid argument in storage layer", sl.Err(err))
+			log.Warn("Invalid argument", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrInvalidArgument)
 		case errors.Is(err, storageerrors.ErrAlreadyExists):
-			log.Warn("User already exists in storage layer", sl.Err(err), slog.String("user_id", userForInsert.Id.String()))
+			log.Warn("User already exists", sl.Err(err), slog.String("user_id", userForInsert.Id.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrAlreadyExists)
 		default:
 			log.Error("Failed to insert user", sl.Err(err), slog.String("user_id", userForInsert.Id.String()))
@@ -150,16 +150,16 @@ func (u *UsersService) Update(ctx context.Context, uid uuid.UUID, userForUpdate 
 	if err != nil {
 		switch {
 		case errors.Is(err, storageerrors.ErrContextCanceled):
-			log.Warn("Context cancelled in storage layer", sl.Err(err))
+			log.Warn("Context cancelled", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrContextCanceled)
 		case errors.Is(err, storageerrors.ErrDeadlineExeeced):
-			log.Warn("Deadline exceeded in storage layer", sl.Err(err))
+			log.Warn("Deadline exceeded", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrDeadlineExeeced)
 		case errors.Is(err, storageerrors.ErrInvalidArgument):
-			log.Warn("Invalid argument in storage layer", sl.Err(err))
+			log.Warn("Invalid argument", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrInvalidArgument)
 		case errors.Is(err, storageerrors.ErrNotFound):
-			log.Warn("User not found in storage layer", sl.Err(err), slog.String("user_id", uid.String()))
+			log.Warn("User not found", sl.Err(err), slog.String("user_id", uid.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		default:
 			log.Error("Failed to update user", sl.Err(err), slog.String("user_id", uid.String()))
@@ -186,16 +186,16 @@ func (u *UsersService) Delete(ctx context.Context, uid uuid.UUID) (models.User, 
 	if err != nil {
 		switch {
 		case errors.Is(err, storageerrors.ErrContextCanceled):
-			log.Warn("Context cancelled in storage layer", sl.Err(err))
+			log.Warn("Context cancelled", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrContextCanceled)
 		case errors.Is(err, storageerrors.ErrDeadlineExeeced):
-			log.Warn("Deadline exceeded in storage layer", sl.Err(err))
+			log.Warn("Deadline exceeded", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrDeadlineExeeced)
 		case errors.Is(err, storageerrors.ErrInvalidArgument):
-			log.Warn("Invalid argument in storage layer", sl.Err(err))
+			log.Warn("Invalid argument", sl.Err(err))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrInvalidArgument)
 		case errors.Is(err, storageerrors.ErrNotFound):
-			log.Warn("User not found in storage layer", sl.Err(err), slog.String("user_id", uid.String()))
+			log.Warn("User not found", sl.Err(err), slog.String("user_id", uid.String()))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerrors.ErrNotFound)
 		default:
 			log.Error("Failed to delete user", sl.Err(err), slog.String("user_id", uid.String()))
