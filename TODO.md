@@ -7,3 +7,13 @@
 3. ag (REST)
 
 4. db
+
+
+TODO
+FIXME
+HACK
+BUG
+NOTE
+XXX
+[ ]
+[x]

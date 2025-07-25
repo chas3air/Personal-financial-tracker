@@ -1,0 +1,108 @@
+services:
+  psql:
+    image: postgres:latest
+    container_name: psqlUsersStorage
+    ports:
+      - "5432:5432"
+    networks:
+      - pft_net
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: pft
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+    - postgres_volume:/var/lib/postgresql/data
+    
+  users_manager:
+    build:
+      context: ./UsersManager
+    container_name: user_service
+    ports:
+      - "6000:50051"
+    networks:
+      - pft_net
+    depends_on:
+      psql:
+        condition: service_healthy
+
+  apigateway:
+    build:
+      context: "./API-Gateway"
+    container_name: api_gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - pft_net
+    volumes:
+      - ./API-Gateway/log:/app/log
+
+
+
+
+  filebeat:
+    image: elastic/filebeat:8.12.0
+    container_name: filebeat
+    user: root
+    depends_on:
+      - logstash
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs:/usr/share/filebeat/logs:ro
+    command: ["--strict.perms=false"]
+
+  logstash:
+    image: logstash:9.0.1
+    container_name: logstash
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5044:5044"  # beats input
+      - "9600:9600"  # monitoring API
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+
+  elasticsearch:
+    image: elasticsearch:9.0.1
+    container_name: elasticsearch
+    environment:
+      - node.name=es01
+      - discovery.type=single-node
+      - cluster.name=elk-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - xpack.monitoring.collection.enabled=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image: kibana:9.0.1
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+
+networks:
+  pft_net:
+
+volumes:
+  postgres_volume:
+  esdata:
+  
